@@ -22,68 +22,120 @@
 # - ./script test
 # - ./script fmtpolice
 
-readonly BUILTIN_COMMANDS="main usage subcommands"
-readonly FUNCTION_NAME_PREFIX="subcommand"
+readonly BUILTIN_COMMANDS="_main _usage _subcommands _cmd_list" # todo - better system for this
+readonly SUBCOMMAND_PREFIX="subcommand"
+readonly DESCRIPTION_PREFIX="desc"
+readonly HELP_PREFIX="help"
 
-function main() {
+function _main() {
   readonly SUBCOMMAND="$(echo "$1" | tr "-" "_")"
 
   if [[ -z "$SUBCOMMAND" ]] ; then
-    usage
+    _usage
     exit
   fi
 
-  if ! type "${FUNCTION_NAME_PREFIX}_${SUBCOMMAND}" &>/dev/null ; then
-    usage
+  if ! type "${SUBCOMMAND_PREFIX}_${SUBCOMMAND}" &>/dev/null ; then
+    _usage
     exit 1
   fi
 
   shift
-  eval "${FUNCTION_NAME_PREFIX}_${SUBCOMMAND} $@"
+  eval "${SUBCOMMAND_PREFIX}_${SUBCOMMAND} $@"
   exit $!
 }
 
-function usage() {
+function _usage() {
   cat <<USAGE >&2
 
   ./script - one script to rule them all
 
-$(subcommands)
+$(_subcommands)
 
 USAGE
 }
 
-function subcommands() {
+
+function _subcommands() {
  echo -e "subcommands:\n"
 
+ for cmd in $(_cmd_list) ; do
+   printf "  $cmd" | tr "_" "-"
+   if type "${DESCRIPTION_PREFIX}_${cmd}" &>/dev/null ; then
+     printf " $("${DESCRIPTION_PREFIX}_${cmd}")"
+   fi
+   echo
+ done
+}
+
+function _cmd_list() {
   compgen -A function | \
     grep -vE "$(echo "$BUILTIN_COMMANDS" | tr " " "|")" | \
-    grep "${FUNCTION_NAME_PREFIX}" | \
-    awk "/^${FUNCTION_NAME_PREFIX}_\./{print;next}{sub(/^${FUNCTION_NAME_PREFIX}_/,\"\",\$1);print}" | \
-    tr "_" "-" | \
-    awk '{print "  " $0}'
+    grep "${SUBCOMMAND_PREFIX}" | \
+    awk "/^${SUBCOMMAND_PREFIX}_\./{print;next}{sub(/^${SUBCOMMAND_PREFIX}_/,\"\",\$1);print}"
 }
 
-# implement subcommands below by declaring "function ${FUNCTION_NAME_PREFIX}_${your-command}() {"
+# help
+function desc_help() { echo "<subcommand> - print help text for subcommand" ; }
+function subcommand_help() {
+  local subcommand="$(echo "$1" | tr "-" "_")"
+  if type "${HELP_PREFIX}_${subcommand}" &>/dev/null ; then
+    eval "${HELP_PREFIX}_${subcommand}"
+  else
+    echo "no help text available for subcommand \"$subcommand\""
+  fi
+}
 
-# for example, -h
+# -h
+function desc__h() { echo "- display help text and exit" ; }
+function help__h() { cat <<HELP
+This is example help text for the "-h/--help" commands.
+HELP
+}
 function subcommand__h() {
-  usage
+  _usage
 }
 
-# also, --help
-function subcommand___help() {
-  usage
-}
+# --help
+function desc___help() { desc__h ; }
+function help___help() { help__h ; }
+function subcommand___help() { subcommand__h ; }
 
+function desc_get() { echo "download all dependencies" ; }
+function help_get() { cat <<HELP
+
+Downloads all dependencies via \`go get\`. Example args might include '-u -d -t'
+
+Help text for \`go help get\`:
+
+$(go help get 2>&1 | awk '{ print "  " $0}')
+HELP
+}
 function subcommand_get() {
   go get "$@" ./...
 }
 
+function desc_test() { echo "run the tests" ; }
+function help_test() { cat <<HELP
+
+Run the tests via \`go test\`
+
+Help text for \`go help test\`:
+
+$(go help test 2>&1 | awk '{ print "  " $0}')
+HELP
+}
 function subcommand_test() {
   go test "$@" ./...
 }
 
+function desc_fmtpolice() { echo "validate formatting using gofmt and golint" ; }
+function help_fmtpolice() { cat <<HELP
+
+Validate formatting using gofmt and golint.  Will download the fmpolice file to ./fmtpolice
+if not already present, so please add "fmtpolice" to your \`.gitignore\`
+HELP
+}
 function subcommand_fmtpolice() {
   if [[ ! -s fmtpolice ]] ; then
     curl -sLOf https://raw.githubusercontent.com/rafecolton/fmtpolice/master/fmtpolice
@@ -91,4 +143,4 @@ function subcommand_fmtpolice() {
   bash fmtpolice
 }
 
-main "$@"
+_main "$@" # this line must always be last
