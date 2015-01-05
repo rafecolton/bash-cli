@@ -1,6 +1,5 @@
 #!/bin/bash
 
-readonly BUILTIN_COMMANDS="_main _usage _subcommands _cmd_list" # todo - better system for this
 readonly SUBCOMMAND_PREFIX="subcommand"
 readonly DESCRIPTION_PREFIX="desc"
 readonly HELP_PREFIX="help"
@@ -48,7 +47,7 @@ function _subcommands() {
 
 function _cmd_list() {
   compgen -A function | \
-    grep -vE "$(echo "$BUILTIN_COMMANDS" | tr " " "|")" | \
+    grep -vE "^_.*" | \
     grep "${SUBCOMMAND_PREFIX}" | \
     awk "/^${SUBCOMMAND_PREFIX}_\./{print;next}{sub(/^${SUBCOMMAND_PREFIX}_/,\"\",\$1);print}"
 }
