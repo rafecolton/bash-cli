@@ -1,57 +1,86 @@
 #!/bin/bash
 
-readonly BUILTIN_COMMANDS="main usage subcommands"
-readonly FUNCTION_NAME_PREFIX="subcommand"
+readonly BUILTIN_COMMANDS="_main _usage _subcommands _cmd_list" # todo - better system for this
+readonly SUBCOMMAND_PREFIX="subcommand"
+readonly DESCRIPTION_PREFIX="desc"
+readonly HELP_PREFIX="help"
 
-function main() {
+function _main() {
   readonly SUBCOMMAND="$(echo "$1" | tr "-" "_")"
 
   if [[ -z "$SUBCOMMAND" ]] ; then
-    usage
+    _usage
     exit
   fi
 
-  if ! type "${FUNCTION_NAME_PREFIX}_${SUBCOMMAND}" &>/dev/null ; then
-    usage
+  if ! type "${SUBCOMMAND_PREFIX}_${SUBCOMMAND}" &>/dev/null ; then
+    _usage
     exit 1
   fi
 
   shift
-  eval "${FUNCTION_NAME_PREFIX}_${SUBCOMMAND} $@"
+  eval "${SUBCOMMAND_PREFIX}_${SUBCOMMAND} $@"
   exit $!
 }
 
-function usage() {
+function _usage() {
   cat <<USAGE >&2
 
   ./script - one script to rule them all
 
-$(subcommands)
+$(_subcommands)
 
 USAGE
 }
 
-function subcommands() {
+
+function _subcommands() {
  echo -e "subcommands:\n"
 
-  compgen -A function | \
-    grep -vE "$(echo "$BUILTIN_COMMANDS" | tr " " "|")" | \
-    grep "${FUNCTION_NAME_PREFIX}" | \
-    awk "/^${FUNCTION_NAME_PREFIX}_\./{print;next}{sub(/^${FUNCTION_NAME_PREFIX}_/,\"\",\$1);print}" | \
-    tr "_" "-" | \
-    awk '{print "  " $0}'
+ for cmd in $(_cmd_list) ; do
+   printf "  $cmd" | tr "_" "-"
+   if type "${DESCRIPTION_PREFIX}_${cmd}" &>/dev/null ; then
+     printf " $("${DESCRIPTION_PREFIX}_${cmd}")"
+   fi
+   echo
+ done
 }
 
-# implement subcommands below by declaring "function ${FUNCTION_NAME_PREFIX}_${your-command}() {"
+function _cmd_list() {
+  compgen -A function | \
+    grep -vE "$(echo "$BUILTIN_COMMANDS" | tr " " "|")" | \
+    grep "${SUBCOMMAND_PREFIX}" | \
+    awk "/^${SUBCOMMAND_PREFIX}_\./{print;next}{sub(/^${SUBCOMMAND_PREFIX}_/,\"\",\$1);print}"
+}
+
+function desc_help() { echo "<subcommand> - print help text for subcommand" ; }
+function subcommand_help() {
+  local subcommand="$(echo "$1" | tr "-" "_")"
+  if type "${HELP_PREFIX}_${subcommand}" &>/dev/null ; then
+    eval "${HELP_PREFIX}_${subcommand}"
+  else
+    echo "no help text available for subcommand \"$subcommand\""
+  fi
+}
+
+# Usage:
+# subcommand - implement subcommands below by declaring "function subcommand_<your-command>() {"
+# description - add descriptions by implementing "function desc_<your-command>() {"
+# help text - add help text for your subcommand by implementing Afunction help_<your-command>() {"
 
 # for example, -h
+function desc__h() { echo "- display help text and exit" ; }
+function help__h() { cat <<HELP
+This is example help text for the "-h/--help" commands.
+HELP
+}
 function subcommand__h() {
-  usage
+  _usage
 }
 
 # also, --help
-function subcommand___help() {
-  usage
-}
+function desc___help() { desc__h ; }
+function help___help() { help__h ; }
+function subcommand___help() { subcommand__h ; }
 
-main "$@"
+_main "$@"
