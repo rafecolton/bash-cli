@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# this ./script file might be found in a typical golang project
+
+readonly BUILTIN_COMMANDS="main usage subcommands"
+readonly FUNCTION_NAME_PREFIX="subcommand"
+
+function main() {
+  readonly SUBCOMMAND="$(echo "$1" | tr "-" "_")"
+
+  if [[ -z "$SUBCOMMAND" ]] ; then
+    usage
+    exit
+  fi
+
+  if ! type "${FUNCTION_NAME_PREFIX}_${SUBCOMMAND}" &>/dev/null ; then
+    usage
+    exit 1
+  fi
+
+  shift
+  eval "${FUNCTION_NAME_PREFIX}_${SUBCOMMAND} $@"
+  exit $!
+}
+
+function usage() {
+  cat <<USAGE >&2
+
+  ./script - one script to rule them all
+
+$(subcommands)
+
+USAGE
+}
+
+function subcommands() {
+ echo -e "subcommands:\n"
+
+  compgen -A function | \
+    grep -vE "$(echo "$BUILTIN_COMMANDS" | tr " " "|")" | \
+    grep "${FUNCTION_NAME_PREFIX}" | \
+    awk "/^${FUNCTION_NAME_PREFIX}_\./{print;next}{sub(/^${FUNCTION_NAME_PREFIX}_/,\"\",\$1);print}" | \
+    tr "_" "-" | \
+    awk '{print "  " $0}'
+}
+
+# implement subcommands below by declaring "function ${FUNCTION_NAME_PREFIX}_${your-command}() {"
+
+# for example, -h
+function subcommand__h() {
+  usage
+}
+
+# also, --help
+function subcommand___help() {
+  usage
+}
+
+function subcommand_get() {
+  go get "$@" ./...
+}
+
+function subcommand_test() {
+  go test "$@" ./...
+}
+
+function subcommand_fmtpolice() {
+  if [[ ! -s fmtpolice ]] ; then
+    curl -sLOf https://raw.githubusercontent.com/rafecolton/fmtpolice/master/fmtpolice
+  fi
+  bash fmtpolice
+}
+
+main "$@"
