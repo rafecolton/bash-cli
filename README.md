@@ -18,9 +18,9 @@ curl -sLOf https://raw.githubusercontent.com/rafecolton/bash-cli/master/script &
 Edit the `./script` file to add your own subcommands  Implement the following
 functions to add subcommands:
 
-* subcommand - implement subcommands below by declaring `function subcommand_<your-command>() {`
-* description - add descriptions by implementing `function desc_<your-command>() {`
-* help text - add help text for your subcommand by implementing `function help_<your-command>() {`
+* subcommand - add a subcommand by implementing `function subcommand_<your-command>()`
+* description - add descriptions by implementing `function desc_<your-command>()`
+* help text - add help text by implementing `function help_<your-command>()`
 
 ### For Example
 
