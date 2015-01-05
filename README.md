@@ -22,6 +22,9 @@ functions to add subcommands:
 * description - add descriptions by implementing `function desc_<your-command>()`
 * help text - add help text by implementing `function help_<your-command>()`
 
+**IMPORTANT:** make sure the `_main "$@"` line remains the last line in
+the file
+
 ### For Example
 
 ```bash

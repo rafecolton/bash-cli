@@ -79,4 +79,4 @@ function desc___help() { desc__h ; }
 function help___help() { help__h ; }
 function subcommand___help() { subcommand__h ; }
 
-_main "$@"
+_main "$@" # this line must always be last
