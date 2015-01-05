@@ -53,6 +53,7 @@ function _cmd_list() {
     awk "/^${SUBCOMMAND_PREFIX}_\./{print;next}{sub(/^${SUBCOMMAND_PREFIX}_/,\"\",\$1);print}"
 }
 
+# help
 function desc_help() { echo "<subcommand> - print help text for subcommand" ; }
 function subcommand_help() {
   local subcommand="$(echo "$1" | tr "-" "_")"
@@ -63,12 +64,7 @@ function subcommand_help() {
   fi
 }
 
-# Usage:
-# subcommand - implement subcommands below by declaring "function subcommand_<your-command>() {"
-# description - add descriptions by implementing "function desc_<your-command>() {"
-# help text - add help text for your subcommand by implementing Afunction help_<your-command>() {"
-
-# for example, -h
+# -h
 function desc__h() { echo "- display help text and exit" ; }
 function help__h() { cat <<HELP
 This is example help text for the "-h/--help" commands.
@@ -78,7 +74,7 @@ function subcommand__h() {
   _usage
 }
 
-# also, --help
+# --help
 function desc___help() { desc__h ; }
 function help___help() { help__h ; }
 function subcommand___help() { subcommand__h ; }
