@@ -11,14 +11,13 @@ function main() {
     exit
   fi
 
-  shift
-
   if ! type "${FUNCTION_NAME_PREFIX}_${SUBCOMMAND}" &>/dev/null ; then
     usage
     exit 1
   fi
 
-  eval "${FUNCTION_NAME_PREFIX}_${SUBCOMMAND}"
+  shift
+  eval "${FUNCTION_NAME_PREFIX}_${SUBCOMMAND} $@"
   exit $!
 }
 
@@ -43,7 +42,7 @@ function subcommands() {
     awk '{print "  " $0}'
 }
 
-# implement subcommands below by declaring "function sub_<your-command>() {"
+# implement subcommands below by declaring "function ${FUNCTION_NAME_PREFIX}_${your-command}() {"
 
 # for example, -h
 function subcommand__h() {
