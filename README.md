@@ -7,7 +7,7 @@ A starter project for a bash cli application
 
 ## Usage
 
-### Install (or just fork)
+### Install (or fork)
 
 ```bash
 curl -sLOf https://raw.githubusercontent.com/rafecolton/bash-cli/master/script && chmod +x script
