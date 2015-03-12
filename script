@@ -25,7 +25,7 @@ function _main() {
 function _usage() {
   cat <<USAGE >&2
 
-  ./script - one script to rule them all
+  ./$(basename "$0") - one script to rule them all
 
 $(_subcommands)
 
