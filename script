@@ -1,11 +1,11 @@
 #!/bin/bash
 
-readonly SUBCOMMAND_PREFIX="subcommand"
+readonly SUBCOMMAND_PREFIX="scmd"
 readonly DESCRIPTION_PREFIX="desc"
 readonly HELP_PREFIX="help"
 
-function _main() {
-  readonly SUBCOMMAND="$(echo "$1" | tr "-" "_")"
+_main() {
+  readonly SUBCOMMAND="${1//-/_}"
 
   if [[ -z "$SUBCOMMAND" ]] ; then
     _usage
@@ -22,7 +22,7 @@ function _main() {
   exit $!
 }
 
-function _usage() {
+_usage() {
   cat <<USAGE >&2
 
   ./$(basename "$0") - one script to rule them all
@@ -33,11 +33,11 @@ USAGE
 }
 
 
-function _subcommands() {
+_subcommands() {
  echo -e "subcommands:\n"
 
  for cmd in $(_cmd_list) ; do
-   printf "  $cmd" | tr "_" "-"
+   printf "  ${cmd//_/-}"
    if type "${DESCRIPTION_PREFIX}_${cmd}" &>/dev/null ; then
      printf " $("${DESCRIPTION_PREFIX}_${cmd}")"
    fi
@@ -45,17 +45,14 @@ function _subcommands() {
  done
 }
 
-function _cmd_list() {
-  compgen -A function | \
-    grep -vE "^_.*" | \
-    grep "${SUBCOMMAND_PREFIX}" | \
-    awk "/^${SUBCOMMAND_PREFIX}_\./{print;next}{sub(/^${SUBCOMMAND_PREFIX}_/,\"\",\$1);print}"
+_cmd_list() {
+  compgen -A function "${SUBCOMMAND_PREFIX}" | sed -e "s/^${SUBCOMMAND_PREFIX}_//"
 }
 
 # help
-function desc_help() { echo "<subcommand> - print help text for subcommand" ; }
-function subcommand_help() {
-  local subcommand="$(echo "$1" | tr "-" "_")"
+desc_help() { echo "<subcommand> - print help text for subcommand" ; }
+scmd_help() {
+  local subcommand="${1//-/_}"
   if type "${HELP_PREFIX}_${subcommand}" &>/dev/null ; then
     eval "${HELP_PREFIX}_${subcommand}"
   else
@@ -64,18 +61,18 @@ function subcommand_help() {
 }
 
 # -h
-function desc__h() { echo "- display help text and exit" ; }
-function help__h() { cat <<HELP
+desc__h() { echo "- display help text and exit" ; }
+help__h() { cat <<HELP
 This is example help text for the "-h/--help" commands.
 HELP
 }
-function subcommand__h() {
+scmd__h() {
   _usage
 }
 
 # --help
-function desc___help() { desc__h ; }
-function help___help() { help__h ; }
-function subcommand___help() { subcommand__h ; }
+desc___help() { desc__h ; }
+help___help() { help__h ; }
+scmd___help() { scmd__h ; }
 
 _main "$@" # this line must always be last
